@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <div id="paletteOSMD" style="display: none;"></div>
+    <div id="osmdContainer"></div>
+    <div id="palette">
+        <div id="paletteRow1" class="palette-row">
+            <div id="wholeNoteDiv" class="palette-div">
+                <svg id="wholeNote" class="palette-svg" draggable="true" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="halfNoteDiv" class="palette-div">
+                <svg id="halfNote" class="palette-svg" draggable="true" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="quarterNoteDiv" class="palette-div">
+                <svg id="quarterNote" class="palette-svg" draggable="true" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="eighthNoteDiv" class="palette-div">
+                <svg id="eighthNote" class="palette-svg" draggable="true" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="sixteenthNoteDiv" class="palette-div">
+                <svg id="sixteenthNote" class="palette-svg" draggable="true" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="dotDiv" class="palette-div">
+                <svg id="dot" class="palette-svg" draggable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="quarterRestDiv" class="palette-div">
+                <svg id="quarterRest" class="palette-svg" draggable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+        </div>
+        <div id="paletteRow2" class="palette-row">
+            <div id="sharpDiv" class="palette-div">
+                <svg id="sharp" class="palette-svg" draggable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="flatDiv" class="palette-div">
+                <svg id="flat" class="palette-svg" draggable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="staccatoDiv" class="palette-div">
+                <svg id="staccato" class="palette-svg" draggable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="tenutoDiv" class="palette-div">
+                <svg id="tenuto" class="palette-svg" draggable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="accentDiv" class="palette-div">
+                <svg id="accent" class="palette-svg" draggable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div id="tieDiv" class="palette-div">
+                <svg id="tie" class="palette-svg" draggable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="opensheetmusicdisplay.min.js"></script>
+<script src="/node_modules/music21j/releases/music21.debug.js"></script>
+<script src="music_util.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js"></script>
+<script>
+    var paletteOSMD = new opensheetmusicdisplay.OpenSheetMusicDisplay("paletteOSMD");
+    var paletteMusicXMLFilePath = "test_xmls/palette_elements.musicxml";
+    var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmdContainer");
+    var musicXMLFilePath = "test_xmls/note_chords.musicxml";
+    var body = document.getElementsByTagName('body')[0],
+        style = window.getComputedStyle(body),
+        bodyMargin = parseFloat(style.getPropertyValue('margin'));
+    var scoreStream;
+    var staffSystems;
+    var clef = 'treble';
+    var timeSig;
+    var pitchShiftLock = false;
+    var rhythmShiftLock = false;
+    const defaultSetOptionDict = {
+        backend: "svg",
+        drawTitle: false,
+        drawPartNames: false,
+        drawMeasureNumbers: false,
+        colorStemsLikeNoteheads: true,
+        autoResize: false,
+    };
+    osmd.setOptions(defaultSetOptionDict);
+    paletteOSMD.setOptions(defaultSetOptionDict);
+
+    function assignPaletteSVGs(paletteElements) {
+        paletteElements.forEach(paletteElement => {
+            var paletteSVG = document.getElementById(paletteElement['name']);
+            paletteSVG.appendChild(paletteElement['object']);
+        });
+    }
+
+    fetch(paletteMusicXMLFilePath)
+    .then(response => response.text())
+    .then(musicXMLContent => {
+        if (musicXMLContent) {
+            paletteOSMD.load(musicXMLContent);
+            paletteOSMD.EngravingRules.RenderTimeSignatures = false;
+            paletteOSMD.EngravingRules.RenderClefsAtBeginningOfStaffline = false;
+            paletteOSMD.EngravingRules.RenderSingleHorizontalStaffline = true;
+            paletteOSMD.render()
+            let checkRenderComplete = setInterval(function() {
+                let renderedElement = document.querySelector('.vf-stavenote');
+                if (renderedElement) {
+                    clearInterval(checkRenderComplete);
+                    const paletteElements = document.querySelectorAll('.vf-stavenote, .vf-curve');
+                    const paletteSVGs = extractPaletteElements(paletteElements);
+                    assignPaletteSVGs(paletteSVGs);
+                    document.getElementById('paletteOSMD').remove()
+
+                    fetch(musicXMLFilePath)
+                    .then(response => response.text())
+                    .then(musicXMLContent => {
+                        if (musicXMLContent) {
+                            scoreStream = music21.converter.parse(musicXMLContent, 'musicxml');
+                            assignIdsToNotes(scoreStream);
+                            osmd.load(musicXMLContent);
+                            osmd.render();
+                            osmd.Sheet.sourceMeasures[0].verticalMeasureList[0].parentStaffLine.staffLines[0].width = 1;
+                            addSVGNoteNumbersAndListeners();
+                            staffSystems = getStaffSystems();
+                            timeSig = getTimeSignature(scoreStream);
+                            osmd.graphic.measureList[0][0].parentStaffLine.staffLines[0].width = 1;
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching or parsing MusicXML:", error);
+                    });
+                }
+            }, 10); // milliseconds
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Shift') {
+            if (event.target.id === 'palette') {
+                pitchShiftLock = true;
+            } else if (event.target.id === 'osmdContainer') {
+                rhythmShiftLock = true;
+            }
+        }
+    });
+
+    document.addEventListener('keyup', function(event) {
+        if (event.key === 'Shift') {
+            if (event.target.id === 'palette') {
+                pitchShiftLock = false;
+            } else if (event.target.id === 'osmdContainer') {
+                rhythmShiftLock = false;
+            }
+        }
+    });
+
+    document.addEventListener('mousedown', handleStart);
+    document.addEventListener('touchstart', handleStart);
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
+
+</script>

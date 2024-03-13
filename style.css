@@ -1,0 +1,114 @@
+#osmdContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+#palette {
+    display: flex;
+    flex-wrap: wrap;
+    margin: auto;
+    width: 290px;
+    height: 100%;
+    border-radius: 10px;
+    background-color: whitesmoke;
+}
+
+.palette-row {
+    display: flex;
+}
+
+.palette-div {
+    display: flex;
+    width: 40px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+}
+
+#wholeNoteDiv {
+    border-bottom: 1.5px solid grey;
+}
+
+#halfNoteDiv, #quarterNoteDiv, #eighthNoteDiv, #sixteenthNoteDiv, #dotDiv, #quarterRestDiv {
+    border-bottom: 1.5px solid grey;
+    border-left: 1.5px solid grey;
+}
+
+#quarterRestDiv {
+    width: 40px;
+}
+
+#sharpDiv, #flatDiv, #staccatoDiv, #tenutoDiv, #accentDiv {
+    border-right: 1.5px solid grey;
+}
+
+#tieDiv {
+    width: 80px;
+}
+
+.palette-svg {
+    display: flex;
+    width: 30px;
+    height: 50px;
+}
+
+#wholeNote {
+    width: 18px;
+    height: 13px;
+    margin-top: 31.5px;
+}
+
+#halfNote, #quarterNote {
+    width: 15px;
+    height: 41px;
+}
+
+#eighthNote, #sixteenthNote {
+    width: 21px;
+    height: 44px;
+}
+
+#dot {
+    width: 4px;
+    height: 4px;
+    margin-top: 31px;
+}
+
+#quarterRest {
+    width: 8px;
+    height: 30px;
+}
+
+#sharp {
+    width: 9px;
+    height: 30px;
+}
+
+#flat {
+    width: 8px;
+    height: 24px;
+}
+
+#staccato {
+    width: 4px;
+    height: 4px;
+}
+
+#tenuto {
+    width: 8px;
+    height: 3px;
+}
+
+#accent {
+    width: 10px;
+    height: 9px;
+}
+
+#tie {
+    width: 75px;
+    height: 10px;
+}
